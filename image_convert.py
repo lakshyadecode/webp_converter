@@ -3,6 +3,7 @@ import streamlit as st
 from PIL import Image
 import shutil
 import tempfile
+import zipfile
 
 
 def convert_and_move_webp(input_files, output_folder):
@@ -21,8 +22,17 @@ def convert_and_move_webp(input_files, output_folder):
             output_path = os.path.join(temp_dir, os.path.splitext(filename)[0] + ".webp")
             img.save(output_path, "WEBP", quality=80)
 
-    # Move converted files to the output folder
-    shutil.move(temp_dir, output_folder)
+    # Create a zip file containing all converted images
+    zip_filename = os.path.join(output_folder, "converted_images.zip")
+    with zipfile.ZipFile(zip_filename, 'w') as zipf:
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), temp_dir))
+
+    # Clean up temporary directory
+    shutil.rmtree(temp_dir)
+
+    return zip_filename
 
 
 def main():
@@ -43,13 +53,11 @@ def main():
             return
 
         # Convert and save images
-        convert_and_move_webp(input_files, output_folder)
+        zip_filename = convert_and_move_webp(input_files, output_folder)
         st.success("Conversion completed.")
 
-        # Provide download links for each converted file
-        converted_files = os.listdir(output_folder)
-        for converted_file in converted_files:
-            st.markdown(f"Download [converted file]({os.path.join(output_folder, converted_file)})")
+        # Provide download link for the zip file
+        st.markdown(f"Download [converted images](/{zip_filename})")
 
 
 if __name__ == "__main__":
