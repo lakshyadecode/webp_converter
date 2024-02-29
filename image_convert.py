@@ -1,56 +1,53 @@
 import os
-import subprocess
 import shutil
-from time import perf_counter
 import streamlit as st
-
-# Global namespace
-dir_name = 'webp'
-extensions = ('.png', '.jpg', '.jpeg')
+from PIL import Image
 
 
-def get_images(file_list):
-    """Filter out images from the uploaded file list."""
-    images = [file for file in file_list if file.name.lower().endswith(extensions)]
-    return images
+def convert_and_move_webp(input_folder, output_folder):
+    # Create the output folder if it doesn't exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Loop through all files in the input folder
+    for filename in os.listdir(input_folder):
+        input_path = os.path.join(input_folder, filename)
+
+        if filename.lower().endswith((".png", ".jpg", ".jpeg")):
+            # Convert and save as WebP
+            output_path = os.path.join(output_folder, os.path.splitext(filename)[0] + ".webp")
+            convert_to_webp(input_path, output_path)
+
+        elif filename.lower().endswith(".webp"):
+            # Move WebP files directly to the output folder
+            output_path = os.path.join(output_folder, filename)
+            shutil.copy(input_path, output_path)
 
 
-def convert_to_webp(image):
-    """Convert the image to WebP format."""
-    try:
-        quality = 80
-        output_file = f"{image.name.split('.')[0]}.webp"
-        command = f'cwebp -q {quality} "{image.name}" -o "{output_file}"'
-        subprocess.run(command, shell=True, check=True)
-        return output_file
-    except Exception as e:
-        st.error(f"Error converting {image.name}: {e}")
-        return None
+def convert_to_webp(input_path, output_path):
+    # Load the image
+    img = Image.open(input_path)
+
+    # Save as WebP
+    img.save(output_path, "WEBP", quality=80)
 
 
 def main():
     st.title("Image Converter to WebP")
 
-    uploaded_files = st.file_uploader("Upload Images", accept_multiple_files=True)
+    input_folder = st.sidebar.selectbox("Select Input Folder", os.listdir())
+    output_folder = st.sidebar.text_input("Output Folder", "converted")
 
-    if uploaded_files:
-        st.write("Converting...")
+    if st.sidebar.button("Convert"):
+        if not input_folder:
+            st.error("Please select an input folder.")
+            return
+        if not os.path.exists(input_folder):
+            st.error("Input folder does not exist.")
+            return
 
-        start_time = perf_counter()
-        webp_files = []
-        for uploaded_file in uploaded_files:
-            webp_file = convert_to_webp(uploaded_file)
-            if webp_file:
-                webp_files.append(webp_file)
-
-        if webp_files:
-            st.write("Conversion completed.")
-            st.write("Download WebP files:")
-            for webp_file in webp_files:
-                st.write(f"[{webp_file}]({webp_file})")
-
-        elapsed_time = perf_counter() - start_time
-        st.write(f"Task completed in {elapsed_time:.4f}s")
+        convert_and_move_webp(input_folder, output_folder)
+        st.success("Conversion completed.")
 
 
 if __name__ == "__main__":
