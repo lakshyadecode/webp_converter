@@ -1,7 +1,7 @@
 import os
-import shutil
 import streamlit as st
 from PIL import Image
+import shutil
 
 
 def convert_and_move_webp(input_folder, output_folder):
@@ -35,18 +35,29 @@ def convert_to_webp(input_path, output_path):
 def main():
     st.title("Image Converter to WebP")
 
-    input_folder = st.sidebar.selectbox("Select Input Folder", os.listdir())
+    # Allow user to select input and output folders
+    input_folder = st.sidebar.file_uploader("Select Input Folder", type=st.config.get_option("upload_file_types"))
     output_folder = st.sidebar.text_input("Output Folder", "converted")
 
     if st.sidebar.button("Convert"):
         if not input_folder:
             st.error("Please select an input folder.")
             return
-        if not os.path.exists(input_folder):
+
+        # Convert input folder object to path string
+        input_folder_path = os.path.abspath(input_folder.name)
+
+        if not os.path.exists(input_folder_path):
             st.error("Input folder does not exist.")
             return
 
-        convert_and_move_webp(input_folder, output_folder)
+        # Ensure output folder is provided
+        if not output_folder:
+            st.error("Please specify an output folder.")
+            return
+
+        # Convert and save images
+        convert_and_move_webp(input_folder_path, output_folder)
         st.success("Conversion completed.")
 
 
