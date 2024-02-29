@@ -36,7 +36,7 @@ def main():
     st.title("Image Converter to WebP")
 
     # Allow user to select input and output folders
-    input_folder = st.sidebar.file_uploader("Select Input Folder", type=st.config.get_option("upload_file_types"))
+    input_folder = st.sidebar.file_uploader("Select Input Folder", type=["png", "jpg", "jpeg"], accept_multiple_files=False)
     output_folder = st.sidebar.text_input("Output Folder", "converted")
 
     if st.sidebar.button("Convert"):
