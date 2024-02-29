@@ -4,6 +4,7 @@ from PIL import Image
 import shutil
 import tempfile
 import zipfile
+from streamlit import file_util
 
 
 def convert_and_move_webp(input_files, output_folder):
@@ -57,7 +58,9 @@ def main():
         st.success("Conversion completed.")
 
         # Provide download link for the zip file
-        st.markdown(f"Download [converted images](/{zip_filename})")
+        with open(zip_filename, "rb") as f:
+            file_data = f.read()
+        st.download_button(label="Download converted images", data=file_data, file_name="converted_images.zip", mime="application/zip")
 
 
 if __name__ == "__main__":
